@@ -1,7 +1,9 @@
-import Mail = require("nodemailer/lib/mailer");
-import * as nodemailer from "nodemailer";
+import Mail = require('nodemailer/lib/mailer');
+import * as nodemailer from 'nodemailer';
 
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from '@nestjs/common';
+import emailConfig from '../config/emailConfig';
+import { ConfigType } from '@nestjs/config';
 
 interface EmailOptions {
   to: string;
@@ -12,13 +14,14 @@ interface EmailOptions {
 @Injectable()
 export class EmailService {
   private transport: Mail;
-
-  constructor() {
+  constructor(
+    @Inject(emailConfig.KEY) private config: ConfigType<typeof emailConfig>,
+  ) {
     this.transport = nodemailer.createTransport({
-      service: "Gmail",
+      service: config.service,
       auth: {
-        user: "",
-        pass: "",
+        user: config.auth.user,
+        pass: config.auth.pass,
       },
     });
   }
@@ -27,13 +30,13 @@ export class EmailService {
     emailAddress: string,
     signupVerifyToken: string,
   ) {
-    const baseUrl = "http://localhost:3000";
+    const baseUrl = this.config.baseUrl;
 
     const url = `${baseUrl}/users/email-verify?signupVerifyToken=${signupVerifyToken}`;
 
     const mailOptions: EmailOptions = {
       to: emailAddress,
-      subject: "가입 인증 메일",
+      subject: '가입 인증 메일',
       html: `
         가입확인 버튼을 누르시면 가입 인증이 완료됩니다.<br/>
         <form action='${url}' method='post'>
