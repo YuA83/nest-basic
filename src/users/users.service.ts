@@ -1,11 +1,18 @@
-import * as uuid from "uuid";
-import { Injectable } from "@nestjs/common";
-import { EmailService } from "../email/email.service";
-import { UserInfo } from "./UserInfo";
+import * as uuid from 'uuid';
+import { ulid } from 'ulid';
+import { Injectable } from '@nestjs/common';
+import { EmailService } from '../email/email.service';
+import { UserInfo } from './UserInfo';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from './entity/user.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  constructor(private emailService: EmailService) {}
+  constructor(
+    private emailService: EmailService,
+    @InjectRepository(UserEntity) private userRepoitory: Repository<UserEntity>,
+  ) {}
 
   async createUser(name: string, email: string, password: string) {
     await this.checkUserExists(email);
@@ -20,13 +27,21 @@ export class UsersService {
     return false;
   }
 
-  private saveUser(
+  private async saveUser(
     name: string,
     email: string,
     password: string,
     signupVerifyToken: string,
   ) {
-    return;
+    const user = new UserEntity();
+
+    user.id = ulid();
+    user.name = name;
+    user.email = email;
+    user.password = password;
+    user.signupVerifyToken = signupVerifyToken;
+
+    await this.userRepoitory.save(user);
   }
 
   private async sendMemberJoinEmail(email: string, signupVerifyToken: string) {
@@ -37,14 +52,14 @@ export class UsersService {
   }
 
   async verifyEmail(signupVerifyToken: string): Promise<string> {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   async login(email: string, password: string): Promise<string> {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 
   async getUserInfo(userId: string): Promise<UserInfo> {
-    throw new Error("Method not implemented");
+    throw new Error('Method not implemented');
   }
 }
