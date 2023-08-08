@@ -1,21 +1,87 @@
 import * as uuid from 'uuid';
 import { ulid } from 'ulid';
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { EmailService } from '../email/email.service';
 import { UserInfo } from './UserInfo';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entity/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private emailService: EmailService,
     @InjectRepository(UserEntity) private userRepoitory: Repository<UserEntity>,
+    private emailService: EmailService,
+    private dataSource: DataSource,
   ) {}
 
+  private async saveUserUsingQueryrunner(
+    name: string,
+    email: string,
+    password: string,
+    signupVerifyToken: string,
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect(); // DB 연결
+    await queryRunner.startTransaction(); // 트랜잭션 시작
+
+    try {
+      const user = new UserEntity();
+
+      user.id = ulid();
+      user.name = name;
+      user.email = email;
+      user.password = password;
+      user.signupVerifyToken = signupVerifyToken;
+
+      await queryRunner.manager.save(user); // 트랜잭션 커밋하여 영속화
+
+      // throw new InternalServerErrorException(); // 테스트를 위해 에러 발생
+
+      await queryRunner.commitTransaction(); // DB 작업 완료후 커밋해서 영속화 완료
+    } catch (e) {
+      // 에러 발생시 롤백
+      await queryRunner.rollbackTransaction();
+    } finally {
+      // 직접 생성한 queryRunner는 해제 필요
+      await queryRunner.release();
+    }
+  }
+
+  private async saveUserUsingTransaction(
+    name: string,
+    email: string,
+    password: string,
+    signupVerifyToken: string,
+  ) {
+    await this.dataSource.transaction(async (manager) => {
+      const user = new UserEntity();
+
+      user.id = ulid();
+      user.name = name;
+      user.email = email;
+      user.password = password;
+      user.signupVerifyToken = signupVerifyToken;
+
+      await manager.save(user);
+
+      // throw new InternalServerErrorException();
+    });
+  }
+
   async createUser(name: string, email: string, password: string) {
-    await this.checkUserExists(email);
+    const userExist = await this.checkUserExists(email);
+
+    if (userExist) {
+      throw new UnprocessableEntityException(
+        '해당 이메일로는 가입할 수 없습니다.',
+      );
+    }
 
     const signupVerifyToken = uuid.v1();
 
@@ -24,7 +90,10 @@ export class UsersService {
   }
 
   private checkUserExists(email: string) {
-    return false;
+    const user = this.userRepoitory.findOne({
+      where: { email },
+    });
+    return user !== undefined;
   }
 
   private async saveUser(
