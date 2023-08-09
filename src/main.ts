@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as process from 'process';
 import { ValidationPipe } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 dotenv.config({
   path: path.resolve(
@@ -23,6 +24,8 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // app.useGlobalGuards(new AuthGuard()); // 전역 가드 설정
 
   await app.listen(3000);
 }

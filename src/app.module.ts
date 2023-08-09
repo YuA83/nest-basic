@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { EmailModule } from './email/email.module';
 import { AppController } from './app.controller';
@@ -7,6 +12,8 @@ import * as process from 'process';
 import emailConfig from './config/emailConfig';
 import { validationSchema } from './config/validationSchema';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoggerMiddleware } from './middleware/logger.middleware';
+import { UsersController } from './users/users.controller';
 
 //https://suloth.tistory.com/22
 @Module({
@@ -28,9 +35,19 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       database: 'test',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: process.env.DATABACE_SYNCHRONIZE === 'true', // 소스코드 기반으로 DB 스키마 동기화, DB 연결될 때마다 초기화됨
+      migrationsRun: false,
+      migrations: [__dirname + '/**/migrations/*.js'],
+      migrationsTableName: 'migrations',
     }),
   ],
   controllers: [AppController],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): any {
+    consumer
+      .apply(LoggerMiddleware)
+      // .exclude({path: '/users', method: RequestMethod.GET})
+      .forRoutes(UsersController);
+  }
+}

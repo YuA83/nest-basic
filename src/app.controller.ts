@@ -1,9 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller()
 export class AppController {
   constructor(private readonly configService: ConfigService) {}
+
+  @UseGuards(AuthGuard)
+  @Get()
+  getHello(): string {
+    return 'Hello';
+  }
 
   @Get('db-host-from-config')
   getDatabaseHostFromConfigService(): string {
