@@ -19,7 +19,7 @@ export class UsersService {
     private dataSource: DataSource,
   ) {}
 
-  private async saveUserUsingQueryrunner(
+  private async saveUserUsingQueryRunner(
     name: string,
     email: string,
     password: string,
@@ -86,14 +86,26 @@ export class UsersService {
     const signupVerifyToken = uuid.v1();
 
     await this.saveUser(name, email, password, signupVerifyToken);
+    // await this.saveUserUsingQueryRunner(
+    //   name,
+    //   email,
+    //   password,
+    //   signupVerifyToken,
+    // );
+    // await this.saveUserUsingTransaction(
+    //   name,
+    //   email,
+    //   password,
+    //   signupVerifyToken,
+    // );
     await this.sendMemberJoinEmail(email, signupVerifyToken);
   }
 
-  private checkUserExists(email: string) {
-    const user = this.userRepoitory.findOne({
+  private async checkUserExists(email: string) {
+    const user = await this.userRepoitory.findOne({
       where: { email },
     });
-    return user !== undefined;
+    return user !== null;
   }
 
   private async saveUser(
