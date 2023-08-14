@@ -1,12 +1,12 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard } from './guard/auth.guard';
 
 @Controller()
 export class AppController {
   constructor(private readonly configService: ConfigService) {}
 
-  @UseGuards(AuthGuard())
+  @UseGuards(AuthGuard)
   @Get()
   getHello(): string {
     return 'Hello';

@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as process from 'process';
 import { ValidationPipe } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+// import { AuthGuard } from '../src/guard/auth.guard';
 
 dotenv.config({
   path: path.resolve(
