@@ -6,8 +6,10 @@ import {
   Post,
   Query,
   UseGuards,
+  Headers,
 } from "@nestjs/common";
 import { AuthGuard } from "src/auth.guard";
+import { AuthService } from "src/auth/auth.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UserLoginDto } from "./dto/user-login.dto";
 import { VerifyEmailDto } from "./dto/verify-email.dto";
@@ -18,9 +20,11 @@ import { UsersService } from "./users.service";
 // @UseGuards(AuthGuard, SampleGuard) // 콤마를 통해서 연결
 @Controller("users")
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private authService: AuthService,
+  ) {}
 
-  // @UseGuards(AuthGuard) // route guard
   @Post()
   async createUser(@Body() dto: CreateUserDto): Promise<void> {
     const { name, email, password } = dto;
@@ -29,24 +33,22 @@ export class UsersController {
   }
 
   @Post("/email-verify")
-  // async verifyEmail(@Query() dto: VerifyEmailDto): Promise<string> {
-  async verifyEmail(@Query() dto: VerifyEmailDto): Promise<void> {
+  async verifyEmail(@Query() dto: VerifyEmailDto): Promise<string> {
     const { signupVerifyToken } = dto;
 
     return await this.usersService.verifyEmail(signupVerifyToken);
   }
 
   @Post("/login")
-  // async login(@Body() dto: UserLoginDto): Promise<string> {
-  async login(@Body() dto: UserLoginDto): Promise<void> {
+  async login(@Body() dto: UserLoginDto): Promise<string> {
     const { email, password } = dto;
 
     return await this.usersService.login(email, password);
   }
 
+  @UseGuards(AuthGuard) // route guard
   @Get("/:id")
-  // async getUserInfo(@Param("id") userId: string): Promise<UserInfo> {
-  async getUserInfo(@Param("id") userId: string): Promise<void> {
+  async getUserInfo(@Param("id") userId: string): Promise<UserInfo> {
     return await this.usersService.getUserInfo(userId);
   }
 }

@@ -1,10 +1,16 @@
 import * as uuid from "uuid";
-import { Injectable, UnprocessableEntityException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from "@nestjs/common";
 import { EmailService } from "src/email/email.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "./entity/user.entity";
 import { DataSource, Repository } from "typeorm";
 import { ulid } from "ulid";
+import { AuthService } from "src/auth/auth.service";
+import { UserInfo } from "./UserInfo";
 
 @Injectable()
 export class UsersService {
@@ -13,6 +19,7 @@ export class UsersService {
     private userRepository: Repository<UserEntity>,
     private dataSource: DataSource,
     private emailService: EmailService,
+    private authService: AuthService,
   ) {}
 
   private async checkUserExists(email: string) {
@@ -118,33 +125,41 @@ export class UsersService {
     await this.sendMemberJoinEmail(email, signupVerifyToken);
   }
 
-  async verifyEmail(signupVerifyToken: string) {
-    /**
-     * TODO
-     * DB -> check token
-     * Error or JWT
-     */
+  async verifyEmail(signupVerifyToken: string): Promise<string> {
+    const user = await this.userRepository.findOne({
+      where: { signupVerifyToken },
+    });
 
-    throw new Error("Method not implemented");
+    if (!user) throw new NotFoundException("유저가 존재하지 않습니다.");
+
+    return this.authService.login(user);
   }
 
-  async login(email: string, password: string) {
-    /**
-     * TODO
-     * DB -> check user
-     * JWT
-     */
+  async login(email: string, password: string): Promise<string> {
+    const user = await this.userRepository.findOne({
+      where: { email, password },
+    });
 
-    throw new Error("Method not implemented");
+    if (!user) throw new NotFoundException("유저가 존재하지 않습니다.");
+
+    return this.authService.login({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    });
   }
 
-  async getUserInfo(userId: string) {
-    /**
-     * TODO
-     * DB -> check userId
-     * return UserInfo
-     */
+  async getUserInfo(userId: string): Promise<UserInfo> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
 
-    throw new Error("Method not implemented");
+    if (!user) throw new NotFoundException("유저가 존재하지 않습니다.");
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    };
   }
 }

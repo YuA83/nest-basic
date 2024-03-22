@@ -1,11 +1,19 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Observable } from "rxjs";
+import { AuthService } from "./auth/auth.service";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   // guard는 CanActive 인터페이스 구현해야 함
-  private validateRequest(request: any) {
+
+  constructor(private authService: AuthService) {}
+
+  private validateRequest(request: Request) {
     // 서비스 내부 규칙에 따라 인가 로직 작성
+    const jwtString = request.headers.get("authorization").split("Bearer ")[1];
+
+    this.authService.verify(jwtString);
+
     return true; // false => 403 error
   }
 
