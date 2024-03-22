@@ -7,7 +7,7 @@ import {
   MaxLength,
   MinLength,
 } from "class-validator";
-import { NotIn } from "src/not-in";
+import { NotIn } from "src/utils/decorators/not-in";
 
 export class CreateUserDto {
   // @Transform(({ value, obj }) => {
