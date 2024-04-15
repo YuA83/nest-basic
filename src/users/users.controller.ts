@@ -8,9 +8,14 @@ import {
   UseGuards,
   Headers,
   Inject,
+  LoggerService,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { Logger as WinstonLogger } from "winston";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import {
+  WINSTON_MODULE_NEST_PROVIDER,
+  WINSTON_MODULE_PROVIDER,
+} from "nest-winston";
 import { AuthGuard } from "src/auth.guard";
 import { AuthService } from "src/auth/auth.service";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -24,11 +29,29 @@ import { UsersService } from "./users.service";
 @Controller("users")
 export class UsersController {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
+    // @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
+
     private usersService: UsersService,
     private authService: AuthService,
   ) {}
 
+  private printLoggerServiceLog(dto) {
+    try {
+      throw new InternalServerErrorException("test");
+    } catch (error) {
+      this.logger.error(`error: ${JSON.stringify(dto)} ${error.stack}`);
+    }
+
+    // LoggerService는 객체를 메시지로 출력하지 않음 => Json.stringify 사용
+    this.logger.warn(`warn: ${JSON.stringify(dto)}`);
+    this.logger.log(`log: ${JSON.stringify(dto)}`);
+    this.logger.verbose(`verbose: ${JSON.stringify(dto)}`);
+    this.logger.debug(`debug: ${JSON.stringify(dto)}`);
+  }
+
+  /*
   private printWinstonLog(dto) {
     this.logger.error(`eroror: ${dto}`);
     this.logger.warn(`warn: ${dto}`);
@@ -38,12 +61,14 @@ export class UsersController {
     this.logger.debug(`debug: ${dto}`);
     this.logger.silly(`silly: ${dto}`);
   }
+  */
 
   @Post()
   async createUser(@Body() dto: CreateUserDto): Promise<void> {
     const { name, email, password } = dto;
 
-    this.printWinstonLog(dto);
+    // this.printWinstonLog(dto);
+    this.printLoggerServiceLog(dto);
     await this.usersService.createUser(name, email, password);
   }
 
