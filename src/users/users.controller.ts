@@ -10,6 +10,7 @@ import {
   Inject,
   LoggerService,
   InternalServerErrorException,
+  Logger,
 } from "@nestjs/common";
 import { Logger as WinstonLogger } from "winston";
 import {
@@ -30,8 +31,8 @@ import { UsersService } from "./users.service";
 export class UsersController {
   constructor(
     // @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    // @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService,
+    @Inject(Logger) private readonly logger: LoggerService,
 
     private usersService: UsersService,
     private authService: AuthService,
