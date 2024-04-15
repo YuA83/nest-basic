@@ -12,8 +12,13 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { LoggerMiddleware } from "./logger/logger.middleware";
 import { Logger2Middleware } from "./logger/logger2.middleware";
 import { UsersController } from "./users/users.controller";
-import { AuthService } from './auth/auth.service';
-import { AuthModule } from './auth/auth.module';
+import { AuthService } from "./auth/auth.service";
+import { AuthModule } from "./auth/auth.module";
+import {
+  utilities as nestWinstonModuleUtilities,
+  WinstonModule,
+} from "nest-winston";
+import * as winston from "winston";
 
 @Module({
   imports: [
@@ -31,6 +36,37 @@ import { AuthModule } from './auth/auth.module';
       database: process.env.DATABASE_DATABASE,
       entities: [`${__dirname}/**/*.entity.{ts,js}`],
       synchronize: process.env.DATABASE_SYNCHRONIZE === "true", // 코드 기반 DB 동기화 (true => 실행마다 초기화)
+    }),
+    WinstonModule.forRoot({
+      /**
+       * [ 내장 Logger Level ]
+       * debug: 0 => low
+       * verbose: 1
+       * log: 2
+       * warn: 3
+       * error: 4 => high
+       *
+       * [ Winston Log Level ]
+       * error: 0 => high
+       * warn: 1
+       * info: 2
+       * http: 3
+       * verbose: 4
+       * debug: 5
+       * silly: 6 => low
+       */
+      transports: [
+        new winston.transports.Console({
+          level: process.env.NODE_ENV === "production" ? "info" : "silly", // log level
+          format: winston.format.combine(
+            winston.format.timestamp(), // 시간 같이 표시
+            nestWinstonModuleUtilities.format.nestLike("MyApp", {
+              // appName: "MyApp", 어디서 로그를 남겼는지 표시
+              prettyPrint: true, // 출력 프리티
+            }),
+          ),
+        }),
+      ],
     }),
     UsersModule,
     EmailModule,
